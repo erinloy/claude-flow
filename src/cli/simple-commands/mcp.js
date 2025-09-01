@@ -82,11 +82,7 @@ async function startMcpServer(subArgs, flags) {
       // Import and run the MCP server directly in this process
       // This allows proper stdio handling for MCP protocol
       const { pathToFileURL } = await import('url');
-      // Fix path for Windows - pathToFileURL needs forward slashes
-      const normalizedPath = process.platform === 'win32' 
-        ? mcpServerPath.replace(/\\/g, '/')
-        : mcpServerPath;
-      const mcpServerUrl = pathToFileURL(normalizedPath).href;
+      const mcpServerUrl = pathToFileURL(mcpServerPath).href;
       const mcpModule = await import(mcpServerUrl);
       if (mcpModule.startMCPServer) {
         await mcpModule.startMCPServer();
