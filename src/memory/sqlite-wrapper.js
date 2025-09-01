@@ -113,7 +113,12 @@ export async function createDatabase(dbPath) {
   }
   
   try {
-    return new DB(dbPath);
+    // Normalize path for Windows - SQLite requires forward slashes on Windows for network drives
+    const normalizedPath = process.platform === 'win32' 
+      ? dbPath.replace(/\\/g, '/')
+      : dbPath;
+    
+    return new DB(normalizedPath);
   } catch (err) {
     // Additional Windows-specific error handling
     if (err.message.includes('EPERM') || err.message.includes('access denied')) {
