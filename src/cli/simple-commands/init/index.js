@@ -1259,22 +1259,11 @@ ${commands.map((cmd) => `- [${cmd}](./${cmd}.md)`).join('\n')}
       }
     }
 
-    // Create wrapper scripts
-    if (!dryRun) {
-      // Unix wrapper - now uses universal ES module compatible wrapper
-      const unixWrapper = createWrapperScript('unix');
-      await fs.writeFile(`${workingDir}/claude-flow`, unixWrapper, 'utf8');
-      await fs.chmod(`${workingDir}/claude-flow`, 0o755);
-
-      // Windows wrapper
-      await fs.writeFile(`${workingDir}/claude-flow.bat`, createWrapperScript('windows', 'utf8'));
-
-      // PowerShell wrapper
-      await fs.writeFile(`${workingDir}/claude-flow.ps1`, createWrapperScript('powershell', 'utf8'));
-
-      printSuccess('✓ Created platform-specific wrapper scripts');
-    } else {
-      console.log('[DRY RUN] Would create wrapper scripts');
+    // REMOVED: Creating local wrapper scripts that override global installation
+    // These wrappers were causing MCP connection failures by shadowing the global claude-flow
+    // Users should use the globally installed claude-flow command instead
+    if (verbose) {
+      console.log('Skipping wrapper script creation (use global claude-flow installation)');
     }
 
     // Create helper scripts
