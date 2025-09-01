@@ -694,11 +694,11 @@ To enable persistence, see: https://github.com/ruvnet/claude-code-flow/docs/wind
     } else {
       // Use SQLite
       const stmt = this.db.prepare(`
-        INSERT INTO session_logs (session_id, log_level, message, agent_id, data)
-        VALUES (?, ?, ?, ?, ?)
+        INSERT INTO session_logs (session_id, log_level, event_type, message, agent_id, data)
+        VALUES (?, ?, ?, ?, ?, ?)
       `);
 
-      stmt.run(sessionId, logLevel, message, agentId, data ? sessionSerializer.serializeLogData(data) : null);
+      stmt.run(sessionId, logLevel, 'log', message, agentId, data ? sessionSerializer.serializeLogData(data) : null);
     }
   }
 

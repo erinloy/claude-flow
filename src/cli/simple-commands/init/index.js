@@ -80,6 +80,8 @@ import {
   getHiveMindStatus,
   rollbackHiveMindInit
 } from './hive-mind-init.js';
+import path from 'path';
+import os from 'os';
 
 /**
  * Check if Claude Code CLI is installed
@@ -89,6 +91,39 @@ function isClaudeCodeInstalled() {
     execSync('which claude', { stdio: 'ignore' });
     return true;
   } catch {
+    return false;
+  }
+}
+
+/**
+ * Check if MCP servers are already configured globally
+ */
+function hasGlobalMcpConfig() {
+  try {
+    const globalConfigPath = path.join(os.homedir(), '.claude.json');
+    if (!existsSync(globalConfigPath)) {
+      return false;
+    }
+    
+    const globalConfig = JSON.parse(require('fs').readFileSync(globalConfigPath, 'utf8'));
+    
+    // Check if there's any global MCP server configuration
+    if (globalConfig.mcpServers && Object.keys(globalConfig.mcpServers).length > 0) {
+      return true;
+    }
+    
+    // Check if there are project-specific MCP servers configured
+    if (globalConfig.projects) {
+      for (const project of Object.values(globalConfig.projects)) {
+        if (project.mcpServers && Object.keys(project.mcpServers).length > 0) {
+          return true;
+        }
+      }
+    }
+    
+    return false;
+  } catch (error) {
+    // If we can't read the config, assume no global config
     return false;
   }
 }
@@ -1173,27 +1208,33 @@ async function enhancedClaudeFlowInit(flags, subArgs = []) {
       );
     }
 
-    // Create .mcp.json at project root for MCP server configuration
-    const mcpConfig = {
-      mcpServers: {
-        'claude-flow': {
-          command: 'npx',
-          args: ['claude-flow@alpha', 'mcp', 'start'],
-          type: 'stdio',
-        },
-        'ruv-swarm': {
-          command: 'npx',
-          args: ['ruv-swarm@latest', 'mcp', 'start'],
-          type: 'stdio',
-        },
-      },
-    };
-
-    if (!dryRun) {
-      await fs.writeFile(`${workingDir}/.mcp.json`, JSON.stringify(mcpConfig, null, 2, 'utf8'));
-      printSuccess('✓ Created .mcp.json at project root for MCP server configuration');
+    // Only create .mcp.json if no global MCP configuration exists
+    if (hasGlobalMcpConfig()) {
+      printWarning('⚠️  Skipping .mcp.json creation - MCP servers already configured globally');
+      console.log('   Use global MCP configuration instead of local .mcp.json file');
     } else {
-      console.log('[DRY RUN] Would create .mcp.json at project root for MCP server configuration');
+      // Create .mcp.json at project root for MCP server configuration
+      const mcpConfig = {
+        mcpServers: {
+          'claude-flow': {
+            command: 'npx',
+            args: ['claude-flow@alpha', 'mcp', 'start'],
+            type: 'stdio',
+          },
+          'ruv-swarm': {
+            command: 'npx',
+            args: ['ruv-swarm@latest', 'mcp', 'start'],
+            type: 'stdio',
+          },
+        },
+      };
+
+      if (!dryRun) {
+        await fs.writeFile(`${workingDir}/.mcp.json`, JSON.stringify(mcpConfig, null, 2, 'utf8'));
+        printSuccess('✓ Created .mcp.json at project root for MCP server configuration');
+      } else {
+        console.log('[DRY RUN] Would create .mcp.json at project root for MCP server configuration');
+      }
     }
 
     // Create claude-flow.config.json for Claude Flow specific settings

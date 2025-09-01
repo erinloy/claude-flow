@@ -274,9 +274,13 @@ export const HIVE_DB_SCHEMA = {
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       session_id TEXT NOT NULL,
       timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+      log_level TEXT DEFAULT 'info',
       event_type TEXT NOT NULL,
+      message TEXT,
       agent_name TEXT,
+      agent_id TEXT,
       event_data TEXT,
+      data TEXT,
       metadata TEXT,
       FOREIGN KEY (session_id) REFERENCES sessions(id)
     );
