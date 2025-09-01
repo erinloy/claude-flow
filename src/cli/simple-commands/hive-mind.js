@@ -1992,12 +1992,20 @@ async function spawnClaudeCodeInstances(swarmId, swarmName, objective, workers, 
       let claudeAvailable = false;
 
       try {
-        execSync('which claude', { stdio: 'ignore' });
+        // Use 'where' on Windows, 'which' on Unix-like systems
+        const checkCommand = process.platform === 'win32' ? 'where claude' : 'which claude';
+        execSync(checkCommand, { stdio: 'ignore' });
         claudeAvailable = true;
       } catch {
-        console.log(chalk.yellow('\n⚠️  Claude Code CLI not found in PATH'));
-        console.log(chalk.gray('Install it with: npm install -g @anthropic-ai/claude-code'));
-        console.log(chalk.gray('\nFalling back to displaying instructions...'));
+        // Try alternative check - directly test if claude command works
+        try {
+          execSync('claude --version', { stdio: 'ignore' });
+          claudeAvailable = true;
+        } catch {
+          console.log(chalk.yellow('\n⚠️  Claude Code CLI not found in PATH'));
+          console.log(chalk.gray('Install it with: npm install -g @anthropic-ai/claude-code'));
+          console.log(chalk.gray('\nFalling back to displaying instructions...'));
+        }
       }
 
       if (claudeAvailable && !flags.dryRun) {
@@ -2895,13 +2903,21 @@ async function launchClaudeWithContext(prompt, flags, sessionId) {
     let claudeAvailable = false;
 
     try {
-      execSync('which claude', { stdio: 'ignore' });
+      // Use 'where' on Windows, 'which' on Unix-like systems
+      const checkCommand = process.platform === 'win32' ? 'where claude' : 'which claude';
+      execSync(checkCommand, { stdio: 'ignore' });
       claudeAvailable = true;
     } catch {
-      console.log(chalk.yellow('\n⚠️  Claude Code CLI not found'));
-      console.log(chalk.gray('Install Claude Code: npm install -g @anthropic-ai/claude-code'));
-      console.log(chalk.gray(`Run with: claude < ${promptFile}`));
-      return;
+      // Try alternative check - directly test if claude command works
+      try {
+        execSync('claude --version', { stdio: 'ignore' });
+        claudeAvailable = true;
+      } catch {
+        console.log(chalk.yellow('\n⚠️  Claude Code CLI not found'));
+        console.log(chalk.gray('Install Claude Code: npm install -g @anthropic-ai/claude-code'));
+        console.log(chalk.gray(`Run with: claude < ${promptFile}`));
+        return;
+      }
     }
 
     if (claudeAvailable && !flags.dryRun) {
