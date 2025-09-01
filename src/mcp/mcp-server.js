@@ -2249,4 +2249,4 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   startMCPServer().catch(console.error);
 }
 
-export { ClaudeFlowMCPServer };
+export { ClaudeFlowMCPServer, startMCPServer };

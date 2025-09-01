@@ -79,25 +79,17 @@ async function startMcpServer(subArgs, flags) {
         throw new Error(`MCP server file not found: ${mcpServerPath}`);
       }
 
-      // Start the MCP server process
-      const serverProcess = spawn('node', [mcpServerPath], {
-        stdio: 'inherit',
-        env: {
-          ...process.env,
-          CLAUDE_FLOW_AUTO_ORCHESTRATOR: autoOrchestrator ? 'true' : 'false',
-          CLAUDE_FLOW_NEURAL_ENABLED: 'true',
-          CLAUDE_FLOW_WASM_ENABLED: 'true',
-        },
-      });
-
-      serverProcess.on('exit', (code) => {
-        if (code !== 0) {
-          console.error(`MCP server exited with code ${code}`);
-        }
-      });
-
-      // Keep the process alive
-      await new Promise(() => {}); // Never resolves, keeps server running
+      // Import and run the MCP server directly in this process
+      // This allows proper stdio handling for MCP protocol
+      const { pathToFileURL } = await import('url');
+      const mcpServerUrl = pathToFileURL(mcpServerPath).href;
+      const mcpModule = await import(mcpServerUrl);
+      if (mcpModule.startMCPServer) {
+        await mcpModule.startMCPServer();
+        // The MCP server will handle its own lifecycle
+      } else {
+        throw new Error('MCP server module does not export startMCPServer');
+      }
     } catch (error) {
       console.error('Failed to start MCP server:', error.message);
 
