@@ -1262,9 +1262,6 @@ ${commands.map((cmd) => `- [${cmd}](./${cmd}.md)`).join('\n')}
     // REMOVED: Creating local wrapper scripts that override global installation
     // These wrappers were causing MCP connection failures by shadowing the global claude-flow
     // Users should use the globally installed claude-flow command instead
-    if (verbose) {
-      console.log('Skipping wrapper script creation (use global claude-flow installation)');
-    }
 
     // Create helper scripts
     const helpers = ['setup-mcp.sh', 'quick-start.sh', 'github-setup.sh', 'github-safe.js', 'standard-checkpoint-hooks.sh', 'checkpoint-manager.sh'];
