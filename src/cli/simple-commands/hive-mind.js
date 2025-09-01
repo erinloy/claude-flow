@@ -2040,9 +2040,10 @@ async function spawnClaudeCodeInstances(swarmId, swarmName, objective, workers, 
         claudeArgs.push(hiveMindPrompt);
 
         // Spawn claude with properly ordered arguments
+        // On Windows, we need shell: true for commands in PATH
         const claudeProcess = childSpawn('claude', claudeArgs, {
           stdio: 'inherit',
-          shell: false,
+          shell: process.platform === 'win32',
         });
 
         // Track child process PID in session
@@ -2943,9 +2944,10 @@ async function launchClaudeWithContext(prompt, flags, sessionId) {
       console.log(chalk.blue('🔍 Debug: Spawning with args:'), claudeArgs.slice(0, 1).map(a => a.substring(0, 50) + '...'));
       
       // Use 'inherit' for interactive session (same as initial spawn)
+      // On Windows, we need shell: true for commands in PATH
       const claudeProcess = childSpawn('claude', claudeArgs, {
         stdio: 'inherit',
-        shell: false,
+        shell: process.platform === 'win32',
       });
       
       console.log(chalk.blue('🔍 Debug: Claude process spawned with PID:'), claudeProcess.pid);
