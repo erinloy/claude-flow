@@ -140,6 +140,7 @@ To enable persistence, see: https://github.com/ruvnet/claude-code-flow/docs/wind
         session_id TEXT NOT NULL,
         timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
         log_level TEXT DEFAULT 'info',
+        event_type TEXT DEFAULT 'log',
         message TEXT,
         agent_id TEXT,
         data TEXT,
@@ -160,10 +161,10 @@ To enable persistence, see: https://github.com/ruvnet/claude-code-flow/docs/wind
       return;
     }
     try {
-      // Check if parent_pid column exists
-      const columns = this.db.prepare('PRAGMA table_info(sessions)').all();
-      const hasParentPid = columns.some((col) => col.name === 'parent_pid');
-      const hasChildPids = columns.some((col) => col.name === 'child_pids');
+      // Check if parent_pid column exists in sessions table
+      const sessionColumns = this.db.prepare('PRAGMA table_info(sessions)').all();
+      const hasParentPid = sessionColumns.some((col) => col.name === 'parent_pid');
+      const hasChildPids = sessionColumns.some((col) => col.name === 'child_pids');
 
       if (!hasParentPid) {
         this.db.exec('ALTER TABLE sessions ADD COLUMN parent_pid INTEGER');
@@ -173,6 +174,15 @@ To enable persistence, see: https://github.com/ruvnet/claude-code-flow/docs/wind
       if (!hasChildPids) {
         this.db.exec('ALTER TABLE sessions ADD COLUMN child_pids TEXT');
         console.log('Added child_pids column to sessions table');
+      }
+
+      // Check if event_type column exists in session_logs table
+      const logColumns = this.db.prepare('PRAGMA table_info(session_logs)').all();
+      const hasEventType = logColumns.some((col) => col.name === 'event_type');
+
+      if (!hasEventType) {
+        this.db.exec("ALTER TABLE session_logs ADD COLUMN event_type TEXT DEFAULT 'log'");
+        console.log('Added event_type column to session_logs table');
       }
     } catch (error) {
       console.error('Migration error:', error);
