@@ -88,10 +88,23 @@ import os from 'os';
  */
 function isClaudeCodeInstalled() {
   try {
-    execSync('which claude', { stdio: 'ignore' });
+    // Try to run claude --version, which works in all environments
+    execSync('claude --version', { stdio: 'ignore' });
     return true;
   } catch {
-    return false;
+    // If that fails, try platform-specific checks
+    try {
+      if (process.platform === 'win32') {
+        // Windows: use 'where' command
+        execSync('where claude', { stdio: 'ignore' });
+      } else {
+        // Unix/Mac: use 'which' command
+        execSync('which claude', { stdio: 'ignore' });
+      }
+      return true;
+    } catch {
+      return false;
+    }
   }
 }
 
@@ -100,30 +113,22 @@ function isClaudeCodeInstalled() {
  */
 function hasGlobalMcpConfig() {
   try {
-    const globalConfigPath = path.join(os.homedir(), '.claude.json');
-    if (!existsSync(globalConfigPath)) {
-      return false;
-    }
+    // Check for global Claude Code MCP configuration
+    // Add timeout to prevent hanging
+    const result = execSync('claude mcp list', { 
+      encoding: 'utf8',
+      timeout: 5000, // 5 second timeout
+      stdio: ['pipe', 'pipe', 'ignore'] // Ignore stderr to prevent issues
+    });
     
-    const globalConfig = JSON.parse(require('fs').readFileSync(globalConfigPath, 'utf8'));
-    
-    // Check if there's any global MCP server configuration
-    if (globalConfig.mcpServers && Object.keys(globalConfig.mcpServers).length > 0) {
+    // If command succeeds and contains our servers, they're already configured
+    if (result && (result.includes('claude-flow') || result.includes('ruv-swarm'))) {
       return true;
-    }
-    
-    // Check if there are project-specific MCP servers configured
-    if (globalConfig.projects) {
-      for (const project of Object.values(globalConfig.projects)) {
-        if (project.mcpServers && Object.keys(project.mcpServers).length > 0) {
-          return true;
-        }
-      }
     }
     
     return false;
   } catch (error) {
-    // If we can't read the config, assume no global config
+    // If claude command fails or times out, assume no global config
     return false;
   }
 }
@@ -137,12 +142,12 @@ async function setupMcpServers(dryRun = false) {
   const servers = [
     {
       name: 'claude-flow',
-      command: 'npx claude-flow@alpha mcp start',
-      description: 'Claude Flow MCP server with swarm orchestration (alpha)',
+      command: 'claude-flow mcp start',
+      description: 'Claude Flow MCP server with swarm orchestration',
     },
     {
       name: 'ruv-swarm',
-      command: 'npx ruv-swarm mcp start',
+      command: 'ruv-swarm mcp start',
       description: 'ruv-swarm MCP server for enhanced coordination',
     },
   ];
@@ -563,7 +568,7 @@ export async function initCommand(subArgs, flags) {
         console.log('  📥 Install with: npm install -g @anthropic-ai/claude-code');
         console.log('  📋 Then add MCP servers manually with:');
         console.log('     claude mcp add claude-flow claude-flow mcp start');
-        console.log('     claude mcp add ruv-swarm npx ruv-swarm mcp start');
+        console.log('     claude mcp add ruv-swarm ruv-swarm mcp start');
       }
     }
   } catch (err) {
@@ -1459,8 +1464,8 @@ ${commands.map((cmd) => `- [${cmd}](./${cmd}.md)`).join('\n')}
       } else {
         console.log('  ℹ️  Skipping MCP setup (--skip-mcp flag used)');
         console.log('\n  📋 To add MCP servers manually:');
-        console.log('     claude mcp add claude-flow npx claude-flow@alpha mcp start');
-        console.log('     claude mcp add ruv-swarm npx ruv-swarm@latest mcp start');
+        console.log('     claude mcp add claude-flow claude-flow mcp start');
+        console.log('     claude mcp add ruv-swarm ruv-swarm mcp start');
         console.log('\n  💡 MCP servers are defined in .mcp.json (project scope)');
       }
     } else if (!dryRun && !isClaudeCodeInstalled()) {
@@ -1468,8 +1473,8 @@ ${commands.map((cmd) => `- [${cmd}](./${cmd}.md)`).join('\n')}
       console.log('\n  📥 To install Claude Code:');
       console.log('     npm install -g @anthropic-ai/claude-code');
       console.log('\n  📋 After installing, add MCP servers:');
-      console.log('     claude mcp add claude-flow npx claude-flow@alpha mcp start');
-      console.log('     claude mcp add ruv-swarm npx ruv-swarm@latest mcp start');
+      console.log('     claude mcp add claude-flow claude-flow mcp start');
+      console.log('     claude mcp add ruv-swarm ruv-swarm mcp start');
       console.log('\n  💡 MCP servers are defined in .mcp.json (project scope)');
     }
 

@@ -109,6 +109,8 @@ test-reports/
 
 
 
+
+
 # Claude Flow generated files
 .claude/settings.local.json
 .mcp.json
@@ -133,4 +135,3 @@ claude-flow
 claude-flow.bat
 claude-flow.ps1
 hive-mind-prompt-*.txt
-.claude-flow/

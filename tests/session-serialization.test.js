@@ -5,7 +5,6 @@
 import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
 import {
   AdvancedSerializer,
-  SessionSerializer,
   createSessionSerializer,
   serializeSessionCheckpoint,
   deserializeSessionCheckpoint
